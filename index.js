@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion } = require("mongodb");
+const { response } = require("express");
 require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5000;
@@ -25,11 +26,32 @@ async function run() {
     const serviceCollection = client
       .db("doctors-portal-db")
       .collection("services");
+
+    const bookingCollection = client
+      .db("doctors-portal-db")
+      .collection("bookings");
     app.get("/services", async (req, res) => {
       const query = {};
       const cursor = serviceCollection.find(query);
       const services = await cursor.toArray();
       res.send(services);
+    });
+    //Inserting a booking
+    app.post("/bookings", async (req, res) => {
+      const booking = req.body;
+      //Preventing same user booking same service
+      const query = {
+        treatment: booking.treatment,
+        date: booking.date,
+        patient: booking.patient,
+      };
+      const exists = await bookingCollection.findOne(query);
+      if (exists) {
+        return res.send({ success: false, booking: exists });
+      }
+      console.log(exists);
+      const result = await bookingCollection.insertOne(booking);
+      return res.send({ success: true, result });
     });
   } finally {
   }
