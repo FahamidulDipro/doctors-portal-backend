@@ -49,9 +49,33 @@ async function run() {
       if (exists) {
         return res.send({ success: false, booking: exists });
       }
-      console.log(exists);
+
       const result = await bookingCollection.insertOne(booking);
       return res.send({ success: true, result });
+    });
+
+    //available
+    app.get("/available", async (req, res) => {
+      const date = req.query.date || "May 15, 2022";
+
+      //Find all the services
+      const services = await serviceCollection.find().toArray();
+      //Get the all bookings of that day
+      const query = { date: date };
+      const bookings = await bookingCollection.find(query).toArray();
+      //For each service find bookings for that service
+      services.forEach((service) => {
+        const serviceBookings = bookings.filter(
+          (b) => b.treatment === service.name
+        );
+
+        const booked = serviceBookings.map((s) => s.slot);
+        const available = service.slots.filter(
+          (slot) => !booked.includes(slot)
+        );
+        service.slots = available;
+      });
+      res.send(services);
     });
   } finally {
   }
