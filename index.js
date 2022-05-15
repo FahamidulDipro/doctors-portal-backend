@@ -44,6 +44,7 @@ async function run() {
         treatment: booking.treatment,
         date: booking.date,
         patient: booking.patient,
+        email: booking.email,
       };
       const exists = await bookingCollection.findOne(query);
       if (exists) {
@@ -76,6 +77,16 @@ async function run() {
         service.slots = available;
       });
       res.send(services);
+    });
+
+    //For dashboard booking data load
+    app.get("/bookings", async (req, res) => {
+      const patient = req.query.patient;
+      const query = { email: patient };
+      // console.log(patient);
+      const bookings = await bookingCollection.find(query).toArray();
+      console.log(bookings);
+      res.send(bookings);
     });
   } finally {
   }
