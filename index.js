@@ -128,6 +128,27 @@ async function run() {
       const result = await userCollection.updateOne(filter, updatedDoc, option);
       res.send({ result, token });
     });
+    //loading all users data
+    app.get("/users", verifyJWT, async (req, res) => {
+      const users = await userCollection.find().toArray();
+      res.send(users);
+    });
+
+    //Making Admin
+    app.put("/user/admin/:email", async (req, res) => {
+      const email = req.params.email;
+
+      const filter = { email: email };
+
+      const updatedDoc = {
+        $set: {
+          role: "admin",
+        },
+      };
+
+      const result = await userCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
   } finally {
   }
 }
