@@ -4,6 +4,7 @@ const { MongoClient, ServerApiVersion } = require("mongodb");
 const { response } = require("express");
 require("dotenv").config();
 var jwt = require("jsonwebtoken");
+const res = require("express/lib/response");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -34,9 +35,7 @@ const verifyJWT = (req, res, next) => {
     }
     req.decoded = decoded;
     next();
-    console.log(decoded);
   });
-  console.log("VErify");
 };
 async function run() {
   try {
@@ -132,6 +131,15 @@ async function run() {
     app.get("/users", verifyJWT, async (req, res) => {
       const users = await userCollection.find().toArray();
       res.send(users);
+    });
+    //Checking user whether he is an admin or not
+    app.get("/admin/:email", async (req, res) => {
+      const email = req.params.email;
+      const user = await userCollection.findOne({ email: email });
+
+      const isAdmin = user.role === "admin";
+
+      res.send({ admin: isAdmin });
     });
 
     //Making Admin
