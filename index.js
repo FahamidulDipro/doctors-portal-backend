@@ -1,11 +1,11 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const { response } = require("express");
 require("dotenv").config();
 var jwt = require("jsonwebtoken");
 const res = require("express/lib/response");
-
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -62,6 +62,7 @@ async function run() {
         date: booking.date,
         patient: booking.patient,
         email: booking.email,
+        price: booking.price,
       };
       const exists = await bookingCollection.findOne(query);
       if (exists) {
@@ -163,6 +164,26 @@ async function run() {
       } else {
         res.status(403).send({ message: "Forbidden!" });
       }
+    });
+    //Get the booking Id for payment
+    app.get("/booking/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const booking = await bookingCollection.findOne(query);
+      res.send(booking);
+    });
+    //Payment Gateway Api
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+      const { service } = req.body;
+      const price = service.price;
+      const amount = price * 100;
+      console.log(service);
+      const paymentIntent = await stripe.paymentIntents({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+      res.send({ clientSecret: paymentIntent.client_secret });
     });
   } finally {
   }
