@@ -174,16 +174,17 @@ async function run() {
     });
     //Payment Gateway Api
     app.post("/create-payment-intent", verifyJWT, async (req, res) => {
-      const { service } = req.body;
+      const service = req.body;
       const price = service.price;
       const amount = price * 100;
-      console.log(service);
-      const paymentIntent = await stripe.paymentIntents({
+      console.log(amount);
+      const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: "usd",
         payment_method_types: ["card"],
       });
       res.send({ clientSecret: paymentIntent.client_secret });
+      // res.send(service);
     });
   } finally {
   }
